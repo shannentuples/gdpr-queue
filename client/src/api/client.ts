@@ -1,6 +1,10 @@
 import type { DsarRequest, FoundRecord, RequestDetail, ResponseLetter } from "../types/dsar";
 
-const BASE = "/api/requests";
+// In dev, relative "/api" is proxied to localhost:4000 by vite.config.ts.
+// In production there's no proxy — VITE_API_BASE_URL (set in Vercel's
+// project env vars) points directly at the deployed backend.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
+const BASE = `${API_BASE_URL}/api/requests`;
 
 async function handle<T>(res: Response): Promise<T> {
   if (!res.ok) {

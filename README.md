@@ -102,14 +102,33 @@ npm run dev
 
 ## Deploy
 
-The client deploys to Vercel as a static build (`vercel.json` at the repo
-root points at `client/`).
+- **Client**: Vercel, static build (`vercel.json` points at `client/`).
+  Push to `main` auto-deploys. Public URL:
+  https://gdpr-dsar-assistant.vercel.app
+- **Server**: Railway, persistent volume mounted at `/data` for the SQLite
+  file (`DATABASE_PATH=/data/dsar.sqlite`). Deployed via `railway up` from
+  `server/` — not git-connected (see note below), so deploys are manual for
+  now: `railway up server --path-as-root --service server --detach`.
+  Public URL: https://server-production-a299.up.railway.app
 
-**Scope note — backend hosting.** Vercel serverless functions have an
-ephemeral filesystem, so a SQLite file written there won't persist between
-requests. The Express + SQLite backend will need a host with a persistent
-disk (Railway, Render, Fly) once the live app needs to actually store
-requests — deferred until that becomes necessary.
+The client's `VITE_API_BASE_URL` (a Vercel production env var) points at
+the Railway URL; the server's `CLIENT_ORIGIN` env var is set to the Vercel
+URL for CORS. Both are plain HTTPS URLs, not secrets.
+
+**Note on the build fix this required.** `tsc` compiles `.ts` files but
+doesn't copy non-TS assets — `dist/db/schema.sql` didn't exist after a
+production build, so the deployed server crashed on boot reading it
+(`ENOENT`). Fixed by copying it as a build step:
+`"build": "tsc -p tsconfig.json && cp src/db/schema.sql dist/db/schema.sql"`.
+This wasn't Railway-specific — `npm run build && npm start` was broken
+locally too; local dev just never exercised it because `npm run dev` runs
+`tsx` directly against `src/`, skipping the compiled build entirely.
+
+**Note on git-based deploys.** Vercel's GitHub App is connected to this
+repo, so client pushes auto-deploy. Railway's isn't (would need the same
+GitHub App authorization flow as Vercel required) — deferred since manual
+`railway up` works fine for a portfolio project's cadence; revisit if this
+becomes a real CI/CD requirement.
 
 ## Scope & assumptions
 
