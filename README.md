@@ -30,13 +30,20 @@ server/   Express API
   `found_records`, `response_letters` tables created; `data_sources` and
   `found_records` seeded with mock CRM/Support/Billing records; intake form
   submits and stores a request with a generated reference number.
-- **Sprint 3 (current): Classification** — Claude classifies each request into
+- **Sprint 3: Classification** — done. Claude classifies each request into
   access/deletion/portability/correction with a confidence score and
   rationale (`server/src/services/classification.ts`). Confidence ≥ 0.6
   auto-sets the type and moves status to `classified`; below that, the type
   stays unset and status becomes `needs_review`. A reviewer-only detail page
-  at `/requests/:id` shows the reasoning (not linked from the public intake
-  flow yet — reachable by URL until Sprint 4's dashboard links to it).
+  at `/requests/:id` shows the reasoning.
+- **Sprint 4 (current): Dashboard & SLA Tracking** — reviewer queue at
+  `/queue` lists requests sorted by deadline (soonest first, using the
+  extended deadline when one's been applied), with a color-coded countdown
+  badge (green >14 days, yellow 3–14, red <3 including overdue). Status
+  filter defaults to "Open (not sent)" with an "All statuses" option and
+  per-status options; type filter covers all four request types. Detail page
+  links back to the queue. Still no auth (out of scope) — `/queue` and
+  `/requests/:id` are reviewer-only by convention, not by access control.
 
 **Confidence threshold note.** The sprint spec says "high/medium confidence
 auto-sets the type; low confidence flags for review" without giving numeric

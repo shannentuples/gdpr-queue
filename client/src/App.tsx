@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { IntakePage } from "./pages/IntakePage";
 import { RequestDetailPage } from "./pages/RequestDetailPage";
+import { DashboardPage } from "./pages/DashboardPage";
 
 export function App() {
   return (
@@ -13,8 +14,10 @@ export function App() {
           </div>
         }
       />
-      {/* Reviewer-only view, not linked from the public intake flow. Reached
-          directly by reference/URL until Sprint 4's dashboard links to it. */}
+      {/* Reviewer-only views — not linked from the public intake flow. There's
+          no auth in this demo (out of scope), so these are reachable by
+          direct URL rather than gated behind a login. */}
+      <Route path="/queue" element={<DashboardPage />} />
       <Route path="/requests/:id" element={<RequestDetailPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

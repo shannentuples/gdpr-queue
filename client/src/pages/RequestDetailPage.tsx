@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { api } from "../api/client";
 import type { DsarRequest } from "../types/dsar";
 
@@ -32,7 +32,10 @@ export function RequestDetailPage() {
 
   return (
     <div style={{ maxWidth: 640, margin: "0 auto", padding: "40px 20px", fontFamily: "system-ui, sans-serif" }}>
-      <div style={{ fontSize: 13, color: "#777" }}>{request.referenceNumber}</div>
+      <Link to="/queue" style={{ fontSize: 13 }}>
+        ← Back to queue
+      </Link>
+      <div style={{ fontSize: 13, color: "#777", marginTop: 12 }}>{request.referenceNumber}</div>
       <h1 style={{ marginTop: 4, marginBottom: 4 }}>{request.requesterName}</h1>
       <p style={{ color: "#555", marginTop: 0 }}>{request.requesterEmail}</p>
 
