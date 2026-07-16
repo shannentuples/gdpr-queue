@@ -1,6 +1,8 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import { requestsRouter } from "./routes/requests.js";
+import "./db/index.js";
 
 const app = express();
 const port = Number(process.env.PORT ?? 4000);
@@ -11,7 +13,7 @@ app.use(express.json());
 
 app.get("/health", (_req, res) => res.json({ ok: true }));
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
-app.get("/", (_req, res) => res.json({ service: "gdpr-dsar-assistant-api", status: "scaffolding" }));
+app.use("/api/requests", requestsRouter);
 
 app.listen(port, () => {
   console.log(`DSAR server listening on http://localhost:${port}`);

@@ -24,8 +24,18 @@ server/   Express API
 
 ## Status
 
-**Sprint 1 (current): Setup & Infrastructure** — project scaffold, deploy
-pipeline, placeholder page live.
+- **Sprint 1: Setup & Infrastructure** — done. Project scaffold, deploy
+  pipeline, placeholder page live at https://gdpr-dsar-assistant.vercel.app
+- **Sprint 2 (current): Data Model & Intake** — `requests`, `data_sources`,
+  `found_records`, `response_letters` tables created; `data_sources` and
+  `found_records` seeded with mock CRM/Support/Billing records; intake form
+  submits and stores a request with a generated reference number. No AI yet.
+
+**Deadline note.** Sprint 2's acceptance criteria describes "a deadline 30
+days out." This implementation uses GDPR Art. 12(3)'s actual rule — one
+calendar month from receipt — which is 28-31 days depending on the month,
+not a flat 30. Chose legal accuracy over the literal AC wording; flagging
+the deviation here rather than silently diverging from the written spec.
 
 ## Setup
 
