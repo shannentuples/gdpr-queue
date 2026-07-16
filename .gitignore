@@ -10,3 +10,5 @@ server/data/*.sqlite-journal
 server/data/*.sqlite-wal
 server/data/*.sqlite-shm
 *.tsbuildinfo
+.vercel
+.env*
