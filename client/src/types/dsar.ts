@@ -35,7 +35,27 @@ export interface FoundRecord {
   createdAt: string;
 }
 
+export interface ResponseLetter {
+  id: string;
+  requestId: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type AuditEventType = "classification" | "search" | "draft" | "edit" | "send";
+
+export interface AuditEvent {
+  id: string;
+  requestId: string;
+  eventType: AuditEventType;
+  detail: string;
+  createdAt: string;
+}
+
 export interface RequestDetail {
   request: DsarRequest;
   foundRecords: FoundRecord[];
+  draftLetter: ResponseLetter | null;
+  auditLog: AuditEvent[];
 }

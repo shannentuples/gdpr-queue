@@ -57,6 +57,18 @@ export interface ResponseLetter {
   requestId: string;
   content: string;
   createdAt: string;
+  updatedAt: string;
+}
+
+export const AUDIT_EVENT_TYPES = ["classification", "search", "draft", "edit", "send"] as const;
+export type AuditEventType = (typeof AUDIT_EVENT_TYPES)[number];
+
+export interface AuditEvent {
+  id: string;
+  requestId: string;
+  eventType: AuditEventType;
+  detail: string;
+  createdAt: string;
 }
 
 export interface IntakeInput {

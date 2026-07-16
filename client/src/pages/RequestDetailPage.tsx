@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../api/client";
-import type { DsarRequest, FoundRecord } from "../types/dsar";
+import type { AuditEvent, DsarRequest, FoundRecord, ResponseLetter } from "../types/dsar";
 
 const STATUS_LABELS: Record<string, string> = {
   new: "New",
@@ -10,6 +10,14 @@ const STATUS_LABELS: Record<string, string> = {
   researching: "Researching",
   drafted: "Drafted",
   sent: "Sent",
+};
+
+const EVENT_LABELS: Record<string, string> = {
+  classification: "Classified",
+  search: "Searched",
+  draft: "Drafted",
+  edit: "Edited",
+  send: "Sent",
 };
 
 function formatPayload(payload: unknown): string {
@@ -25,9 +33,15 @@ export function RequestDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [request, setRequest] = useState<DsarRequest | null>(null);
   const [foundRecords, setFoundRecords] = useState<FoundRecord[]>([]);
+  const [draftLetter, setDraftLetter] = useState<ResponseLetter | null>(null);
+  const [auditLog, setAuditLog] = useState<AuditEvent[]>([]);
+  const [letterText, setLetterText] = useState("");
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const [drafting, setDrafting] = useState(false);
+  const [savingLetter, setSavingLetter] = useState(false);
+  const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(() => {
@@ -38,6 +52,9 @@ export function RequestDetailPage() {
       .then((detail) => {
         setRequest(detail.request);
         setFoundRecords(detail.foundRecords);
+        setDraftLetter(detail.draftLetter);
+        setAuditLog(detail.auditLog);
+        setLetterText(detail.draftLetter?.content ?? "");
       })
       .catch((err) => setError(err instanceof Error ? err.message : "Failed to load request"))
       .finally(() => setLoading(false));
@@ -74,10 +91,54 @@ export function RequestDetailPage() {
     }
   }
 
+  async function handleGenerateDraft() {
+    if (!id) return;
+    setDrafting(true);
+    setError(null);
+    try {
+      await api.generateDraft(id);
+      load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Draft generation failed");
+    } finally {
+      setDrafting(false);
+    }
+  }
+
+  async function handleSaveEdits() {
+    if (!id) return;
+    setSavingLetter(true);
+    setError(null);
+    try {
+      await api.updateDraftLetter(id, letterText);
+      load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Saving edits failed");
+    } finally {
+      setSavingLetter(false);
+    }
+  }
+
+  async function handleSend() {
+    if (!id) return;
+    setSending(true);
+    setError(null);
+    try {
+      await api.sendRequest(id);
+      load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Marking as sent failed");
+    } finally {
+      setSending(false);
+    }
+  }
+
   if (loading) return <p style={{ padding: 40 }}>Loading…</p>;
   if (!request) return <p style={{ padding: 40, color: "#b91c1c" }}>{error ?? "Request not found"}</p>;
 
   const hasSearched = request.status === "researching" || request.status === "drafted" || request.status === "sent";
+  const isSent = request.status === "sent";
+  const letterDirty = draftLetter !== null && letterText !== draftLetter.content;
 
   return (
     <div style={{ maxWidth: 640, margin: "0 auto", padding: "40px 20px", fontFamily: "system-ui, sans-serif" }}>
@@ -177,11 +238,79 @@ export function RequestDetailPage() {
       </section>
 
       <section style={sectionStyle}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h3>Response letter</h3>
+          {!isSent && (
+            <button onClick={handleGenerateDraft} disabled={drafting} style={buttonStyle}>
+              {drafting ? "Drafting…" : draftLetter ? "Regenerate draft" : "Generate draft"}
+            </button>
+          )}
+        </div>
+        {!draftLetter ? (
+          <p style={{ color: "#777" }}>No draft has been generated yet.</p>
+        ) : (
+          <>
+            <textarea
+              value={letterText}
+              onChange={(e) => setLetterText(e.target.value)}
+              readOnly={isSent}
+              rows={14}
+              style={letterTextareaStyle}
+            />
+            {!isSent && (
+              <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                <button onClick={handleSaveEdits} disabled={!letterDirty || savingLetter} style={buttonStyle}>
+                  {savingLetter ? "Saving…" : "Save edits"}
+                </button>
+                <button
+                  onClick={handleSend}
+                  disabled={sending || letterDirty}
+                  style={{ ...buttonStyle, backgroundColor: "#15803d" }}
+                  title={letterDirty ? "Save your edits first" : undefined}
+                >
+                  {sending ? "Sending…" : "Mark as sent"}
+                </button>
+              </div>
+            )}
+            {isSent && <p style={{ fontSize: 12, color: "#15803d", fontWeight: 600 }}>✓ Sent — letter is locked</p>}
+          </>
+        )}
+      </section>
+
+      <section style={sectionStyle}>
         <h3>Deadline</h3>
         <p>
           Received {new Date(request.receivedAt).toLocaleDateString()} — response due{" "}
           {new Date(request.extendedDeadlineAt ?? request.deadlineAt).toLocaleDateString()}
         </p>
+      </section>
+
+      <section style={sectionStyle}>
+        <h3>Activity log</h3>
+        {auditLog.length === 0 ? (
+          <p style={{ color: "#777" }}>No activity yet.</p>
+        ) : (
+          <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+            {auditLog.map((event) => (
+              <li
+                key={event.id}
+                style={{
+                  display: "flex",
+                  gap: 10,
+                  padding: "8px 0",
+                  borderBottom: "1px solid #f5f5f5",
+                  fontSize: 13,
+                }}
+              >
+                <span style={{ color: "#777", whiteSpace: "nowrap" }}>
+                  {new Date(event.createdAt).toLocaleString()}
+                </span>
+                <span style={{ fontWeight: 600 }}>{EVENT_LABELS[event.eventType] ?? event.eventType}</span>
+                <span style={{ color: "#555" }}>{event.detail}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       {error && <p style={{ color: "#b91c1c" }}>{error}</p>}
@@ -212,4 +341,15 @@ const matchCardStyle = {
   padding: 12,
   borderRadius: 8,
   border: "1px solid",
+};
+const letterTextareaStyle = {
+  width: "100%",
+  padding: 12,
+  fontSize: 13,
+  fontFamily: "inherit",
+  lineHeight: 1.5,
+  borderRadius: 8,
+  border: "1px solid #ddd",
+  boxSizing: "border-box" as const,
+  resize: "vertical" as const,
 };

@@ -1,4 +1,4 @@
-import type { DsarRequest, FoundRecord, RequestDetail } from "../types/dsar";
+import type { DsarRequest, FoundRecord, RequestDetail, ResponseLetter } from "../types/dsar";
 
 const BASE = "/api/requests";
 
@@ -37,4 +37,16 @@ export const api = {
     fetch(`${BASE}/${requestId}/records/${recordId}/confirm`, { method: "POST" }).then((r) =>
       handle<FoundRecord[]>(r)
     ),
+
+  generateDraft: (id: string) =>
+    fetch(`${BASE}/${id}/draft`, { method: "POST" }).then((r) => handle<ResponseLetter>(r)),
+
+  updateDraftLetter: (id: string, content: string) =>
+    fetch(`${BASE}/${id}/letter`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content }),
+    }).then((r) => handle<ResponseLetter>(r)),
+
+  sendRequest: (id: string) => fetch(`${BASE}/${id}/send`, { method: "POST" }).then((r) => handle<DsarRequest>(r)),
 };

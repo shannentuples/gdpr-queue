@@ -50,13 +50,29 @@ CREATE TABLE IF NOT EXISTS found_records (
   created_at TEXT NOT NULL
 );
 
+-- One row per request — generating a new draft overwrites content (and
+-- bumps updated_at) rather than versioning; reviewer edits update the same
+-- row. See Sprint 6 README note on why versioning was left out.
 CREATE TABLE IF NOT EXISTS response_letters (
   id TEXT PRIMARY KEY,
-  request_id TEXT NOT NULL REFERENCES requests(id) ON DELETE CASCADE,
+  request_id TEXT UNIQUE NOT NULL REFERENCES requests(id) ON DELETE CASCADE,
   content TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+-- Sprint 6 AC: every classification/search/draft/edit/send action gets a
+-- timestamped, human-readable log entry so the process is defensible in an
+-- audit. Append-only — nothing here is ever updated or deleted.
+CREATE TABLE IF NOT EXISTS audit_log (
+  id TEXT PRIMARY KEY,
+  request_id TEXT NOT NULL REFERENCES requests(id) ON DELETE CASCADE,
+  event_type TEXT NOT NULL, -- classification | search | draft | edit | send
+  detail TEXT NOT NULL,
   created_at TEXT NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_found_records_data_source_id ON found_records(data_source_id);
 CREATE INDEX IF NOT EXISTS idx_found_records_request_id ON found_records(request_id);
 CREATE INDEX IF NOT EXISTS idx_response_letters_request_id ON response_letters(request_id);
+CREATE INDEX IF NOT EXISTS idx_audit_log_request_id ON audit_log(request_id);

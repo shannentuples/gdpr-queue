@@ -44,17 +44,26 @@ server/   Express API
   options; type filter covers all four request types. Detail page links back
   to the queue. Still no auth (out of scope) — `/queue` and `/requests/:id`
   are reviewer-only by convention, not by access control.
-- **Sprint 5 (current): Data Source Search** — a `search_data_sources` tool
+- **Sprint 5: Data Source Search** — done. A `search_data_sources` tool
   (email/name/sources params) lets Claude decide which data sources to
   search; matching itself is deterministic, not left to the model (email
   exact-match, name fuzzy-match via Levenshtein similarity —
   `server/src/utils/fuzzyMatch.ts`). Each match carries its own confidence
   and reason. Matches ≥ 0.7 confidence auto-confirm; below that, they render
   visually distinct (orange) on the detail page and require an explicit
-  "Confirm this is the right person" click before counting as found — Sprint
-  6's draft will only reference confirmed records. Search results are stored
-  as `found_records` rows scoped to the request (`request_id` set); the
-  original seeded rows are never mutated, so re-running search is safe.
+  "Confirm this is the right person" click before counting as found. Search
+  results are stored as `found_records` rows scoped to the request
+  (`request_id` set); the original seeded rows are never mutated, so
+  re-running search is safe.
+- **Sprint 6 (current): Drafting, Audit Log & Polish** — draft generation
+  (`server/src/services/letterDraft.ts`) is handed only confirmed matches, so
+  an unconfirmed fuzzy match can never leak into a letter. One
+  `response_letters` row per request; the reviewer can edit the content and
+  save, then "Mark as sent" locks it — the server rejects further edits
+  (409) once `status = 'sent'`, not just the UI. Every classification,
+  search, draft, edit, and send action writes an append-only `audit_log`
+  row with a timestamp and human-readable detail, shown chronologically on
+  the detail page.
 
 **Match confidence threshold note.** Same situation as classification: the
 spec says matches "below a threshold" need confirmation without giving a
