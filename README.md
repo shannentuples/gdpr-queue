@@ -74,3 +74,4 @@ between intake and search (e.g. an email verification token, or a second
 identifier). For this project, requests are assumed pre-verified
 (`verified: true` stub in the schema, added in Sprint 2) so the demo can
 focus on classification, search, and drafting logic.
+
