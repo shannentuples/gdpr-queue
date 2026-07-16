@@ -25,4 +25,6 @@ export const api = {
     }).then((r) => handle<DsarRequest>(r)),
 
   listRequests: () => fetch(BASE).then((r) => handle<DsarRequest[]>(r)),
+
+  getRequest: (id: string) => fetch(`${BASE}/${id}`).then((r) => handle<DsarRequest>(r)),
 };

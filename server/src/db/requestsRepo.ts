@@ -82,6 +82,18 @@ export function createRequest(input: {
   return getRequest(id)!;
 }
 
+export function applyClassification(
+  id: string,
+  input: { requestType: RequestType | null; confidence: number; rationale: string; status: RequestStatus }
+): DsarRequest | undefined {
+  db.prepare(
+    `UPDATE requests
+     SET request_type = ?, classification_confidence = ?, classification_rationale = ?, status = ?, updated_at = ?
+     WHERE id = ?`
+  ).run(input.requestType, input.confidence, input.rationale, input.status, new Date().toISOString(), id);
+  return getRequest(id);
+}
+
 export function getRequest(id: string): DsarRequest | undefined {
   const row = db.prepare("SELECT * FROM requests WHERE id = ?").get(id) as RequestRow | undefined;
   return row ? rowToRequest(row) : undefined;
