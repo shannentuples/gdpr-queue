@@ -40,6 +40,7 @@ export interface DataSource {
 export interface FoundRecord {
   id: string;
   dataSourceId: string;
+  sourceName: string;
   subjectName: string;
   subjectEmail: string;
   recordType: string;

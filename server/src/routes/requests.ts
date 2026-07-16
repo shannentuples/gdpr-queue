@@ -1,8 +1,10 @@
 import { Router } from "express";
 import { z } from "zod";
-import { applyClassification, createRequest, getRequest, listRequests } from "../db/requestsRepo.js";
+import { applyClassification, createRequest, getRequest, listRequests, updateStatus } from "../db/requestsRepo.js";
+import { confirmMatch, listRequestMatches } from "../db/foundRecordsRepo.js";
 import { calculateDeadline } from "../utils/deadlines.js";
 import { classifyRequest, resolveClassificationOutcome } from "../services/classification.js";
+import { searchDataSources } from "../services/search.js";
 
 export const requestsRouter = Router();
 
@@ -50,5 +52,34 @@ requestsRouter.get("/", (_req, res) => {
 requestsRouter.get("/:id", (req, res) => {
   const request = getRequest(req.params.id);
   if (!request) return res.status(404).json({ error: "Request not found" });
-  res.json(request);
+  const foundRecords = listRequestMatches(req.params.id);
+  res.json({ request, foundRecords });
+});
+
+// AI tool-calling search across mock data sources (Sprint 5). Persists
+// matches with a confidence + reason each; matches at/above the confirm
+// threshold are auto-confirmed, the rest need a reviewer's explicit confirm.
+requestsRouter.post("/:id/search", async (req, res) => {
+  const request = getRequest(req.params.id);
+  if (!request) return res.status(404).json({ error: "Request not found" });
+
+  updateStatus(req.params.id, "researching");
+  try {
+    const { matches, summary } = await searchDataSources(request);
+    res.json({ matches, summary });
+  } catch (err) {
+    console.error("Search failed:", err);
+    res.status(502).json({ error: "Search failed" });
+  }
+});
+
+// Manually confirm a below-threshold match before it counts as "found" for
+// this request (Sprint 5 AC: don't disclose/delete on an unconfirmed guess).
+requestsRouter.post("/:id/records/:recordId/confirm", (req, res) => {
+  const request = getRequest(req.params.id);
+  if (!request) return res.status(404).json({ error: "Request not found" });
+
+  const confirmed = confirmMatch(req.params.id, req.params.recordId);
+  if (!confirmed) return res.status(404).json({ error: "Match not found for this request" });
+  res.json(listRequestMatches(req.params.id));
 });

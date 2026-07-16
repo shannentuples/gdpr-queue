@@ -94,6 +94,15 @@ export function applyClassification(
   return getRequest(id);
 }
 
+export function updateStatus(id: string, status: RequestStatus): DsarRequest | undefined {
+  db.prepare("UPDATE requests SET status = ?, updated_at = ? WHERE id = ?").run(
+    status,
+    new Date().toISOString(),
+    id
+  );
+  return getRequest(id);
+}
+
 export function getRequest(id: string): DsarRequest | undefined {
   const row = db.prepare("SELECT * FROM requests WHERE id = ?").get(id) as RequestRow | undefined;
   return row ? rowToRequest(row) : undefined;

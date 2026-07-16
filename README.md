@@ -36,14 +36,32 @@ server/   Express API
   auto-sets the type and moves status to `classified`; below that, the type
   stays unset and status becomes `needs_review`. A reviewer-only detail page
   at `/requests/:id` shows the reasoning.
-- **Sprint 4 (current): Dashboard & SLA Tracking** — reviewer queue at
-  `/queue` lists requests sorted by deadline (soonest first, using the
-  extended deadline when one's been applied), with a color-coded countdown
-  badge (green >14 days, yellow 3–14, red <3 including overdue). Status
-  filter defaults to "Open (not sent)" with an "All statuses" option and
-  per-status options; type filter covers all four request types. Detail page
-  links back to the queue. Still no auth (out of scope) — `/queue` and
-  `/requests/:id` are reviewer-only by convention, not by access control.
+- **Sprint 4: Dashboard & SLA Tracking** — done. Reviewer queue at `/queue`
+  lists requests sorted by deadline (soonest first, using the extended
+  deadline when one's been applied), with a color-coded countdown badge
+  (green >14 days, yellow 3–14, red <3 including overdue). Status filter
+  defaults to "Open (not sent)" with an "All statuses" option and per-status
+  options; type filter covers all four request types. Detail page links back
+  to the queue. Still no auth (out of scope) — `/queue` and `/requests/:id`
+  are reviewer-only by convention, not by access control.
+- **Sprint 5 (current): Data Source Search** — a `search_data_sources` tool
+  (email/name/sources params) lets Claude decide which data sources to
+  search; matching itself is deterministic, not left to the model (email
+  exact-match, name fuzzy-match via Levenshtein similarity —
+  `server/src/utils/fuzzyMatch.ts`). Each match carries its own confidence
+  and reason. Matches ≥ 0.7 confidence auto-confirm; below that, they render
+  visually distinct (orange) on the detail page and require an explicit
+  "Confirm this is the right person" click before counting as found — Sprint
+  6's draft will only reference confirmed records. Search results are stored
+  as `found_records` rows scoped to the request (`request_id` set); the
+  original seeded rows are never mutated, so re-running search is safe.
+
+**Match confidence threshold note.** Same situation as classification: the
+spec says matches "below a threshold" need confirmation without giving a
+number. Used 0.5 as the floor below which a name isn't even surfaced as a
+candidate, and 0.7 as the auto-confirm line — both in
+`server/src/utils/fuzzyMatch.ts`, both arbitrary starting points pending real
+usage data.
 
 **Confidence threshold note.** The sprint spec says "high/medium confidence
 auto-sets the type; low confidence flags for review" without giving numeric

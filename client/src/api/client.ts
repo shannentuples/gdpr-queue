@@ -1,4 +1,4 @@
-import type { DsarRequest } from "../types/dsar";
+import type { DsarRequest, FoundRecord, RequestDetail } from "../types/dsar";
 
 const BASE = "/api/requests";
 
@@ -26,5 +26,15 @@ export const api = {
 
   listRequests: () => fetch(BASE).then((r) => handle<DsarRequest[]>(r)),
 
-  getRequest: (id: string) => fetch(`${BASE}/${id}`).then((r) => handle<DsarRequest>(r)),
+  getRequest: (id: string) => fetch(`${BASE}/${id}`).then((r) => handle<RequestDetail>(r)),
+
+  runSearch: (id: string) =>
+    fetch(`${BASE}/${id}/search`, { method: "POST" }).then((r) =>
+      handle<{ matches: FoundRecord[]; summary: string }>(r)
+    ),
+
+  confirmMatch: (requestId: string, recordId: string) =>
+    fetch(`${BASE}/${requestId}/records/${recordId}/confirm`, { method: "POST" }).then((r) =>
+      handle<FoundRecord[]>(r)
+    ),
 };

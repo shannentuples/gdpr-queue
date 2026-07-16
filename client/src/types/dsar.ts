@@ -19,3 +19,23 @@ export interface DsarRequest {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface FoundRecord {
+  id: string;
+  dataSourceId: string;
+  sourceName: string;
+  subjectName: string;
+  subjectEmail: string;
+  recordType: string;
+  payload: unknown;
+  requestId: string | null;
+  matchConfidence: number | null;
+  matchReason: string | null;
+  confirmed: boolean;
+  createdAt: string;
+}
+
+export interface RequestDetail {
+  request: DsarRequest;
+  foundRecords: FoundRecord[];
+}

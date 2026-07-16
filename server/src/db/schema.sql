@@ -30,9 +30,12 @@ CREATE TABLE IF NOT EXISTS data_sources (
   created_at TEXT NOT NULL
 );
 
--- Mock personal-data records seeded per data source (Sprint 2). Sprint 5's
--- search links a subset of these to a specific request by setting
--- request_id/match_confidence/match_reason/confirmed at search time.
+-- Two kinds of rows share this table: catalog rows (request_id IS NULL,
+-- seeded once — "what personal data exists in these systems") and match
+-- rows (request_id set — a per-request search result copied from a catalog
+-- row, carrying that request's match_confidence/match_reason/confirmed).
+-- Search never mutates catalog rows; it deletes and re-inserts a request's
+-- match rows each run, so re-searching is idempotent.
 CREATE TABLE IF NOT EXISTS found_records (
   id TEXT PRIMARY KEY,
   data_source_id TEXT NOT NULL REFERENCES data_sources(id),
