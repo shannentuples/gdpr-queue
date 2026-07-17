@@ -94,6 +94,26 @@ export function applyClassification(
   return getRequest(id);
 }
 
+// Manual reviewer override (Sprint 7) — separate from applyClassification,
+// which is the AI's own write. Deliberately leaves classification_confidence
+// and classification_rationale untouched: they're the historical record of
+// what the AI thought and why, not a field that gets overwritten just
+// because a human corrected the type. If the request was needs_review, a
+// reviewer setting a type is exactly what resolves that state, so this also
+// advances status to 'classified'.
+export function setRequestType(id: string, requestType: RequestType): DsarRequest | undefined {
+  const current = getRequest(id);
+  if (!current) return undefined;
+  const nextStatus: RequestStatus = current.status === "needs_review" ? "classified" : current.status;
+  db.prepare("UPDATE requests SET request_type = ?, status = ?, updated_at = ? WHERE id = ?").run(
+    requestType,
+    nextStatus,
+    new Date().toISOString(),
+    id
+  );
+  return getRequest(id);
+}
+
 export function updateStatus(id: string, status: RequestStatus): DsarRequest | undefined {
   db.prepare("UPDATE requests SET status = ?, updated_at = ? WHERE id = ?").run(
     status,

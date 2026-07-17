@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Link, Navigate, Route, Routes } from "react-router-dom";
 import { IntakePage } from "./pages/IntakePage";
 import { RequestDetailPage } from "./pages/RequestDetailPage";
 import { DashboardPage } from "./pages/DashboardPage";
@@ -11,12 +11,18 @@ export function App() {
         element={
           <div style={{ padding: "40px 20px", fontFamily: "system-ui, sans-serif" }}>
             <IntakePage />
+            {/* Real staff tools are usually reached through a discreet, separate
+                entry point rather than being linked from the public-facing page.
+                There's no real auth behind this in the demo (out of scope — see
+                README), so it's a plain link, not a login gate. */}
+            <div style={{ textAlign: "center", marginTop: 40 }}>
+              <Link to="/queue" style={{ fontSize: 12, color: "#aaa" }}>
+                Reviewer sign-in
+              </Link>
+            </div>
           </div>
         }
       />
-      {/* Reviewer-only views — not linked from the public intake flow. There's
-          no auth in this demo (out of scope), so these are reachable by
-          direct URL rather than gated behind a login. */}
       <Route path="/queue" element={<DashboardPage />} />
       <Route path="/requests/:id" element={<RequestDetailPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />

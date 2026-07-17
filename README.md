@@ -7,6 +7,13 @@ trail.
 
 **Live**: https://gdpr-dsar-assistant.vercel.app · **Repo**: this one
 
+This app has two audiences: the public intake form anyone can submit, and
+an internal reviewer queue that handles submitted requests. Those are
+different people in real life (a data subject vs. a compliance reviewer),
+so the app doesn't link them together — there's a small "Reviewer sign-in"
+link in the footer of the intake page (no real login behind it; see Scope
+& assumptions) if you want to see both sides in one session.
+
 ## The problem
 
 Under GDPR, anyone can ask a company what personal data it holds on them,
@@ -106,13 +113,18 @@ would need to change.
 
 ## Features
 
-- **Intake** — public form, no auth required to submit. Confirms with a
+- **Intake** — public form, no auth required to submit. A one-line
+  explanation of what GDPR is sits right under the heading, since most
+  people submitting the form aren't privacy-law experts. Confirms with a
   human-readable reference number (`DSAR-2026-00001`) and the statutory
   deadline.
 - **Classification** — Claude reads the free-text request and classifies
   it as access / deletion / portability / correction with a confidence
   score and rationale. High confidence auto-progresses the request; low
-  confidence routes it to a `needs_review` state instead of guessing.
+  confidence routes it to a `needs_review` state instead of guessing. A
+  reviewer can always set or correct the type from a dropdown on the
+  detail page — not just when the AI left it unset — and that override is
+  itself an audit-logged event, distinct from the AI's own classification.
 - **Reviewer queue** — sorted by deadline urgency, color-coded (green /
   yellow / red), filterable by status and type.
 - **AI search** — tool-calling search across mock CRM/Support/Billing data
@@ -205,9 +217,13 @@ identifier). For this project, requests are assumed pre-verified
 classification, search, and drafting logic.
 
 **No authentication.** `/queue` and `/requests/:id` are "reviewer-only" by
-URL convention, not by access control — there's no login system. Anyone
-with the link can view or act on any request. Fine for a portfolio demo,
-not fine for production.
+URL convention, not by access control — there's no login system. The
+"Reviewer sign-in" link on the intake page is a plain link to `/queue`,
+not a login gate. Anyone with the link can view or act on any request.
+Fine for a portfolio demo where the goal is letting one visitor explore
+both personas; not fine for production, where intake and review would be
+separate apps (or at minimum separate authenticated areas) so a requester
+never has a path to another requester's data.
 
 **Deterministic search stays deterministic.** The `search_data_sources`
 tool's matching logic is intentionally *not* delegated to the model (see
@@ -223,3 +239,7 @@ pushed separately, verified against the live Claude API in a real browser
 before being called done — not just type-checked. Commit history is the
 detailed record; this file documents the decisions that aren't obvious
 from the diffs.
+
+**Sprint 7** (post-launch polish): a GDPR one-liner on the intake form, a
+reviewer-editable type dropdown (not just AI-set), and the discreet
+reviewer-sign-in link described above.

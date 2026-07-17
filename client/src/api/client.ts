@@ -1,4 +1,4 @@
-import type { DsarRequest, FoundRecord, RequestDetail, ResponseLetter } from "../types/dsar";
+import type { DsarRequest, FoundRecord, RequestDetail, RequestType, ResponseLetter } from "../types/dsar";
 
 // In dev, relative "/api" is proxied to localhost:4000 by vite.config.ts.
 // In production there's no proxy — VITE_API_BASE_URL (set in Vercel's
@@ -53,4 +53,11 @@ export const api = {
     }).then((r) => handle<ResponseLetter>(r)),
 
   sendRequest: (id: string) => fetch(`${BASE}/${id}/send`, { method: "POST" }).then((r) => handle<DsarRequest>(r)),
+
+  setRequestType: (id: string, requestType: RequestType) =>
+    fetch(`${BASE}/${id}/type`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ requestType }),
+    }).then((r) => handle<DsarRequest>(r)),
 };

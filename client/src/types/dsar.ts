@@ -1,4 +1,5 @@
 export type RequestType = "access" | "deletion" | "portability" | "correction";
+export const REQUEST_TYPES: RequestType[] = ["access", "deletion", "portability", "correction"];
 
 export type RequestStatus = "new" | "classified" | "needs_review" | "researching" | "drafted" | "sent";
 

@@ -1,6 +1,13 @@
 import { Router } from "express";
 import { z } from "zod";
-import { applyClassification, createRequest, getRequest, listRequests, updateStatus } from "../db/requestsRepo.js";
+import {
+  applyClassification,
+  createRequest,
+  getRequest,
+  listRequests,
+  setRequestType,
+  updateStatus,
+} from "../db/requestsRepo.js";
 import { confirmMatch, listRequestMatches } from "../db/foundRecordsRepo.js";
 import { getDraft, saveDraft, updateDraftContent } from "../db/responseLettersRepo.js";
 import { listEvents, logEvent } from "../db/auditLogRepo.js";
@@ -8,6 +15,7 @@ import { calculateDeadline } from "../utils/deadlines.js";
 import { classifyRequest, resolveClassificationOutcome } from "../services/classification.js";
 import { searchDataSources } from "../services/search.js";
 import { draftResponseLetter } from "../services/letterDraft.js";
+import { REQUEST_TYPES } from "../types/dsar.js";
 
 export const requestsRouter = Router();
 
@@ -58,6 +66,28 @@ requestsRouter.post("/", async (req, res) => {
 
 requestsRouter.get("/", (_req, res) => {
   res.json(listRequests());
+});
+
+const setTypeSchema = z.object({ requestType: z.enum(REQUEST_TYPES) });
+
+// Reviewer sets or overrides the request type (Sprint 7) — covers both the
+// needs_review case (AI wasn't confident enough to pick one) and simple
+// correction of an AI misclassification. Locked once sent, same as the
+// letter, since the type is part of what the sent response was based on.
+requestsRouter.put("/:id/type", (req, res) => {
+  const request = getRequest(req.params.id);
+  if (!request) return res.status(404).json({ error: "Request not found" });
+  if (request.status === "sent") {
+    return res.status(409).json({ error: "Cannot change the type of a request that has already been sent" });
+  }
+
+  const parsed = setTypeSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+
+  const previous = request.requestType ?? "unset";
+  const updated = setRequestType(req.params.id, parsed.data.requestType);
+  logEvent(req.params.id, "classification", `Reviewer set type to ${parsed.data.requestType} (was ${previous})`);
+  res.json(updated);
 });
 
 requestsRouter.get("/:id", (req, res) => {

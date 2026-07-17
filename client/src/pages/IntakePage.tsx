@@ -52,6 +52,10 @@ export function IntakePage() {
   return (
     <div style={{ maxWidth: 560, margin: "0 auto" }}>
       <h1>Submit a Data Subject Request</h1>
+      <p style={{ fontSize: 13, color: "#888", marginTop: -8 }}>
+        GDPR is a European privacy law that gives you the right to access, correct, export, or
+        delete the personal data a company holds about you.
+      </p>
       <p style={{ color: "#555" }}>
         Describe what you're asking for. We'll confirm receipt with a reference number and
         respond within the statutory deadline.

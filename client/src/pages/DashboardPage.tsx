@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api/client";
-import type { DsarRequest, RequestStatus, RequestType } from "../types/dsar";
+import { REQUEST_TYPES, type DsarRequest, type RequestStatus, type RequestType } from "../types/dsar";
 import { DeadlineBadge } from "../components/DeadlineBadge";
 
-const TYPE_OPTIONS: RequestType[] = ["access", "deletion", "portability", "correction"];
 const STATUS_OPTIONS: RequestStatus[] = ["new", "classified", "needs_review", "researching", "drafted", "sent"];
 
 type StatusFilter = "open" | "all" | RequestStatus;
@@ -64,7 +63,7 @@ export function DashboardPage() {
           Type{" "}
           <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value as TypeFilter)}>
             <option value="all">All types</option>
-            {TYPE_OPTIONS.map((t) => (
+            {REQUEST_TYPES.map((t) => (
               <option key={t} value={t}>
                 {t}
               </option>

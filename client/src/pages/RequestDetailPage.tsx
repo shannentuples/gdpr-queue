@@ -1,7 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../api/client";
-import type { AuditEvent, DsarRequest, FoundRecord, ResponseLetter } from "../types/dsar";
+import {
+  REQUEST_TYPES,
+  type AuditEvent,
+  type DsarRequest,
+  type FoundRecord,
+  type RequestType,
+  type ResponseLetter,
+} from "../types/dsar";
 
 const STATUS_LABELS: Record<string, string> = {
   new: "New",
@@ -42,6 +49,7 @@ export function RequestDetailPage() {
   const [drafting, setDrafting] = useState(false);
   const [savingLetter, setSavingLetter] = useState(false);
   const [sending, setSending] = useState(false);
+  const [settingType, setSettingType] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(() => {
@@ -119,6 +127,21 @@ export function RequestDetailPage() {
     }
   }
 
+  async function handleTypeChange(newType: string) {
+    if (!id || !newType) return;
+    setSettingType(true);
+    setError(null);
+    try {
+      const updated = await api.setRequestType(id, newType as RequestType);
+      setRequest(updated);
+      load(); // refreshes the activity log with the new entry
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Setting type failed");
+    } finally {
+      setSettingType(false);
+    }
+  }
+
   async function handleSend() {
     if (!id) return;
     setSending(true);
@@ -149,9 +172,24 @@ export function RequestDetailPage() {
       <h1 style={{ marginTop: 4, marginBottom: 4 }}>{request.requesterName}</h1>
       <p style={{ color: "#555", marginTop: 0 }}>{request.requesterEmail}</p>
 
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "16px 0" }}>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", margin: "16px 0" }}>
         <span style={badgeStyle}>{STATUS_LABELS[request.status] ?? request.status}</span>
-        <span style={badgeStyle}>{request.requestType ?? "type not set"}</span>
+        <select
+          value={request.requestType ?? ""}
+          onChange={(e) => handleTypeChange(e.target.value)}
+          disabled={isSent || settingType}
+          style={typeSelectStyle}
+          title={isSent ? "Locked — request has been sent" : "Set or correct the request type"}
+        >
+          <option value="" disabled>
+            type not set
+          </option>
+          {REQUEST_TYPES.map((t) => (
+            <option key={t} value={t}>
+              {t}
+            </option>
+          ))}
+        </select>
         <span style={{ ...badgeStyle, backgroundColor: request.verified ? "#dcfce7" : "#fee2e2" }}>
           {request.verified ? "Identity verified (stub)" : "Not verified"}
         </span>
@@ -319,6 +357,15 @@ export function RequestDetailPage() {
 }
 
 const sectionStyle = { margin: "20px 0", padding: "16px 0", borderTop: "1px solid #eee" };
+const typeSelectStyle = {
+  fontSize: 12,
+  fontWeight: 600,
+  padding: "3px 8px",
+  borderRadius: 999,
+  border: "1px solid #c7d2fe",
+  backgroundColor: "#eef2ff",
+  color: "#3730a3",
+};
 const badgeStyle = {
   fontSize: 12,
   fontWeight: 600,
